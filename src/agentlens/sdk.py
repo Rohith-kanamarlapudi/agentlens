@@ -1,17 +1,20 @@
 from __future__ import annotations
 
+import contextvars
 import functools
-import json
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable
 
 from .models import Run, Span
 
-from pathlib import Path
-
-
 TRACE_FILE = Path("traces.jsonl")
+
+# Context variable used to track nested spans
+CURRENT_SPAN = contextvars.ContextVar(
+    "current_span",
+    default=None,
+)
 
 # Keys that should never be written to disk
 SECRET_KEYS = {
@@ -27,16 +30,18 @@ SECRET_KEYS = {
 
 
 def _redact(value: Any) -> Any:
-    """Recursively redact secrets from dictionaries/lists."""
+    """
+    Recursively redact secrets from dictionaries, lists and tuples.
+    """
 
     if isinstance(value, dict):
         return {
-            k: (
+            key: (
                 "***REDACTED***"
-                if k.lower() in SECRET_KEYS
-                else _redact(v)
+                if key.lower() in SECRET_KEYS
+                else _redact(val)
             )
-            for k, v in value.items()
+            for key, val in value.items()
         }
 
     if isinstance(value, list):
@@ -48,13 +53,11 @@ def _redact(value: Any) -> Any:
     return value
 
 
-
-
-
 def _emit(run: Run) -> None:
     """
     Persist a single run as one JSON object per line (JSONL).
-    This temporary storage will be replaced by SQLite on Day 4.
+
+    Day 4 replaces this with SQLite storage.
     """
 
     TRACE_FILE.parent.mkdir(parents=True, exist_ok=True)
@@ -68,20 +71,24 @@ def _emit(run: Run) -> None:
         )
         f.write("\n")
 
+
 def trace(
     fn: Callable | None = None,
     *,
     name: str | None = None,
 ):
     """
-    Usage:
+    Trace any function.
+
+    Usage
+    -----
 
     @trace
     def foo():
         ...
 
     @trace(name="planner")
-    def bar():
+    def planner():
         ...
     """
 
@@ -94,8 +101,11 @@ def trace(
                 agent_name=name or func.__name__,
             )
 
+            parent_span = CURRENT_SPAN.get()
+
             span = Span(
                 name=name or func.__name__,
+                parent_id=parent_span,
             )
 
             span.inputs = _redact(
@@ -106,6 +116,8 @@ def trace(
             )
 
             run.spans.append(span)
+
+            token = CURRENT_SPAN.set(span.span_id)
 
             try:
                 result = func(*args, **kwargs)
@@ -130,6 +142,8 @@ def trace(
 
                 span.ended_at = now
                 run.ended_at = now
+
+                CURRENT_SPAN.reset(token)
 
                 _emit(run)
 
