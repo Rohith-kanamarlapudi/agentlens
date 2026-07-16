@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import json
 import sqlite3
 from pathlib import Path
+
+from .models import Run, Span, ToolCall
 
 DB_FILE = Path("agentlens.db")
 
@@ -43,15 +46,153 @@ CREATE TABLE IF NOT EXISTS tool_calls (
 """
 
 
-def get_connection() -> sqlite3.Connection:
-    """Return a SQLite connection."""
+class TraceStore:
+    def __init__(self, db_path: str | Path = DB_FILE):
+        self.conn = sqlite3.connect(db_path)
+        self.conn.row_factory = sqlite3.Row
+        self.conn.executescript(SCHEMA)
 
-    return sqlite3.connect(DB_FILE)
+    def save_trace(self, run: Run) -> None:
+        """Persist a Run and all nested objects."""
 
+        self.conn.execute(
+            """
+            INSERT OR REPLACE INTO runs
+            (run_id, agent_name, status, started_at, ended_at)
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (
+                run.run_id,
+                run.agent_name,
+                run.status,
+                run.started_at.isoformat() if run.started_at else None,
+                run.ended_at.isoformat() if run.ended_at else None,
+            ),
+        )
 
-def initialize_database() -> None:
-    """Create all database tables if they don't exist."""
+        for span in run.spans:
 
-    with get_connection() as conn:
-        conn.executescript(SCHEMA)
-        conn.commit()
+            self.conn.execute(
+                """
+                INSERT OR REPLACE INTO spans
+                (
+                    span_id,
+                    run_id,
+                    parent_id,
+                    name,
+                    started_at,
+                    ended_at,
+                    inputs,
+                    output,
+                    error
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    span.span_id,
+                    run.run_id,
+                    span.parent_id,
+                    span.name,
+                    span.started_at.isoformat() if span.started_at else None,
+                    span.ended_at.isoformat() if span.ended_at else None,
+                    json.dumps(span.inputs),
+                    json.dumps(span.output),
+                    span.error,
+                ),
+            )
+
+            for tc in span.tool_calls:
+
+                self.conn.execute(
+                    """
+                    INSERT OR REPLACE INTO tool_calls
+                    (
+                        tool_id,
+                        span_id,
+                        name,
+                        inputs,
+                        output,
+                        started_at,
+                        ended_at,
+                        error
+                    )
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        tc.tool_id,
+                        span.span_id,
+                        tc.name,
+                        json.dumps(tc.inputs),
+                        json.dumps(tc.output),
+                        tc.started_at.isoformat() if tc.started_at else None,
+                        tc.ended_at.isoformat() if tc.ended_at else None,
+                        tc.error,
+                    ),
+                )
+
+        self.conn.commit()
+
+    def get_trace(self, run_id: str) -> Run | None:
+        """Load a Run from SQLite."""
+
+        row = self.conn.execute(
+            "SELECT * FROM runs WHERE run_id=?",
+            (run_id,),
+        ).fetchone()
+
+        if row is None:
+            return None
+
+        run = Run(
+            run_id=row["run_id"],
+            agent_name=row["agent_name"],
+            status=row["status"],
+            started_at=row["started_at"] if row["started_at"] else None,
+            ended_at=row["ended_at"] if row["ended_at"] else None,
+            spans=[],
+        )
+
+        span_rows = self.conn.execute(
+            "SELECT * FROM spans WHERE run_id=?",
+            (run_id,),
+        ).fetchall()
+
+        for s in span_rows:
+
+            span = Span(
+                span_id=s["span_id"],
+                parent_id=s["parent_id"],
+                name=s["name"],
+                started_at=s["started_at"],
+                ended_at=s["ended_at"],
+                inputs=json.loads(s["inputs"] or "{}"),
+                output=json.loads(s["output"] or "null"),
+                error=s["error"],
+                tool_calls=[],
+            )
+
+            tool_rows = self.conn.execute(
+                "SELECT * FROM tool_calls WHERE span_id=?",
+                (span.span_id,),
+            ).fetchall()
+
+            for t in tool_rows:
+
+                span.tool_calls.append(
+                    ToolCall(
+                        tool_id=t["tool_id"],
+                        name=t["name"],
+                        inputs=json.loads(t["inputs"] or "{}"),
+                        output=json.loads(t["output"] or "null"),
+                        started_at=t["started_at"],
+                        ended_at=t["ended_at"],
+                        error=t["error"],
+                    )
+                )
+
+            run.spans.append(span)
+
+        return run
+
+    def close(self):
+        self.conn.close()
