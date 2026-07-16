@@ -42,9 +42,16 @@ class Span(BaseModel):
 
     ended_at: datetime | None = None
 
+    inputs: dict[str, Any] = Field(default_factory=dict)
+
+    output: Any | None = None
+
+    error: str | None = None
+
     tool_calls: list[ToolCall] = Field(default_factory=list)
-
-
+    
+    
+    
 class Run(BaseModel):
     """
     Top-level execution of an AI agent.
