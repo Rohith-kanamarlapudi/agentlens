@@ -193,6 +193,92 @@ class TraceStore:
             run.spans.append(span)
 
         return run
+    
+    
+    
+    def list_runs(
+        self,
+        agent_name: str | None = None,
+        status: str | None = None,
+        since: str | None = None,
+    ) -> list[sqlite3.Row]:
+        """
+        Return all runs matching the supplied filters.
+        """
+
+        query = "SELECT * FROM runs WHERE 1=1"
+        params = []
+
+        if agent_name:
+            query += " AND agent_name = ?"
+            params.append(agent_name)
+
+        if status:
+            query += " AND status = ?"
+            params.append(status)
+
+        if since:
+            query += " AND started_at >= ?"
+            params.append(since)
+
+        query += " ORDER BY started_at DESC"
+
+        return self.conn.execute(query, params).fetchall()
+
+    def list_agent_names(self) -> list[str]:
+        """
+        Return all distinct agent names.
+        """
+
+        rows = self.conn.execute(
+            """
+            SELECT DISTINCT agent_name
+            FROM runs
+            ORDER BY agent_name
+            """
+        ).fetchall()
+
+        return [row["agent_name"] for row in rows]
+
+    def get_run_count(self) -> int:
+        """
+        Return the total number of stored runs.
+        """
+
+        row = self.conn.execute(
+            "SELECT COUNT(*) AS count FROM runs"
+        ).fetchone()
+
+        return row["count"]
+
+    def list_statuses(self) -> list[str]:
+        """
+        Return all distinct run statuses.
+        """
+
+        rows = self.conn.execute(
+            """
+            SELECT DISTINCT status
+            FROM runs
+            ORDER BY status
+            """
+        ).fetchall()
+
+        return [row["status"] for row in rows]
+
+    def delete_run(self, run_id: str) -> None:
+        """
+        Delete a run and all related spans/tool calls.
+        """
+
+        self.conn.execute(
+            "DELETE FROM runs WHERE run_id=?",
+            (run_id,),
+        )
+
+        self.conn.commit()
+
+
 
     def close(self):
         self.conn.close()
