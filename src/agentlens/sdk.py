@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import contextvars
 import functools
+import inspect
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable
@@ -55,7 +56,7 @@ def _redact(value: Any) -> Any:
 
 def _emit(run: Run) -> None:
     """
-    Persist a single run as one JSON object per line (JSONL).
+    Persist one run as a JSONL record.
 
     Day 4 replaces this with SQLite storage.
     """
@@ -78,7 +79,7 @@ def trace(
     name: str | None = None,
 ):
     """
-    Trace any function.
+    Trace synchronous and asynchronous functions.
 
     Usage
     -----
@@ -94,6 +95,69 @@ def trace(
 
     def decorator(func: Callable):
 
+        # ==========================================================
+        # Async wrapper
+        # ==========================================================
+        if inspect.iscoroutinefunction(func):
+
+            @functools.wraps(func)
+            async def async_wrapper(*args, **kwargs):
+
+                run = Run(
+                    agent_name=name or func.__name__,
+                )
+
+                parent_span = CURRENT_SPAN.get()
+
+                span = Span(
+                    name=name or func.__name__,
+                    parent_id=parent_span,
+                )
+
+                span.inputs = _redact(
+                    {
+                        "args": args,
+                        "kwargs": kwargs,
+                    }
+                )
+
+                run.spans.append(span)
+
+                token = CURRENT_SPAN.set(span.span_id)
+
+                try:
+                    result = await func(*args, **kwargs)
+
+                    span.output = _redact(result)
+
+                    run.status = "success"
+
+                    return result
+
+                except Exception as exc:
+
+                    span.error = str(exc)
+
+                    run.status = "failed"
+
+                    raise
+
+                finally:
+
+                    now = datetime.utcnow()
+
+                    span.ended_at = now
+                    run.ended_at = now
+
+                    CURRENT_SPAN.reset(token)
+
+                    _emit(run)
+
+            return async_wrapper
+
+        # ==========================================================
+        # Sync wrapper
+        # ==========================================================
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
 
