@@ -1,0 +1,35 @@
+[project]
+name = "agentlens"
+version = "0.1.0"
+description = "Framework-agnostic evaluation and observability for multi-agent LLM systems"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+
+authors = [
+    { name = "Rohith" }
+]
+
+dependencies = [
+    "pydantic>=2.11",
+    "typing-extensions>=4.12",
+    "python-dotenv>=1.1",
+    "click>=8.1",
+    "pytest>=8.4",
+    "openai>=1.99.0"
+]
+
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
