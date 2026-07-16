@@ -8,6 +8,8 @@ from typing import Any, Callable
 
 from .models import Run, Span
 
+from pathlib import Path
+
 
 TRACE_FILE = Path("traces.jsonl")
 
@@ -46,15 +48,25 @@ def _redact(value: Any) -> Any:
     return value
 
 
+
+
+
 def _emit(run: Run) -> None:
-    """Append one JSON trace per line."""
+    """
+    Persist a single run as one JSON object per line (JSONL).
+    This temporary storage will be replaced by SQLite on Day 4.
+    """
 
     TRACE_FILE.parent.mkdir(parents=True, exist_ok=True)
 
     with TRACE_FILE.open("a", encoding="utf-8") as f:
-        f.write(run.model_dump_json())
+        f.write(
+            run.model_dump_json(
+                exclude_none=True,
+                indent=None,
+            )
+        )
         f.write("\n")
-
 
 def trace(
     fn: Callable | None = None,
