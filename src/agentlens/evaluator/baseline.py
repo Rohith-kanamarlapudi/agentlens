@@ -22,4 +22,5 @@ def load_baseline(
     with path.open(
         "r",
         encoding="utf-8",
-    ) as f
+    ) as f:
+        return json.load(f)
