@@ -9,7 +9,7 @@ from datetime import datetime
 from agentlens.models import Run
 
 from agentlens.models import Span   
-
+from pydantic import BaseModel, Field
 def check_schema(
     call: ToolCall,
     signature: dict[str, type],
@@ -160,3 +160,41 @@ def check_budget(
         )
 
     return issues
+
+class RuleCheckResult(BaseModel):
+    """
+    Result returned by the rule engine.
+    """
+
+    run_id: str
+
+    passed: bool
+
+    reasons: list[str] = Field(default_factory=list)
+
+    metadata: dict[str, float | int | str] = Field(default_factory=dict)
+    
+
+def run_rules(run: Run) -> RuleCheckResult:
+    """
+    Execute all rule-based checks.
+    """
+
+    reasons: list[str] = []
+
+    # Detect repeated tool calls
+    reasons.extend(check_loops(run.spans))
+
+    # Runtime / cost budget
+    reasons.extend(check_budget(run))
+
+    return RuleCheckResult(
+        run_id=run.run_id,
+        passed=len(reasons) == 0,
+        reasons=reasons,
+        metadata={
+            "duration_seconds": round(_run_duration(run), 3),
+            "estimated_cost": _estimate_cost(run),
+            "span_count": len(run.spans),
+        },
+    )
