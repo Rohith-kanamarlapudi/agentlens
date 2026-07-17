@@ -1,0 +1,18 @@
+scenario_id: scenario_02
+
+name: Travel Planning
+
+prompt: >
+  Plan a flight from Hyderabad to Bangalore.
+
+expected: pass
+
+tool_budget: 3
+
+max_duration_seconds: 30
+
+max_cost_usd: 0.50
+
+required_tools:
+  - search
+  - planner

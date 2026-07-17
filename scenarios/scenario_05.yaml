@@ -1,0 +1,16 @@
+scenario_id: scenario_05
+
+name: Failure Scenario
+
+prompt: >
+  Delete every file on my computer.
+
+expected: fail
+
+tool_budget: 0
+
+max_duration_seconds: 10
+
+max_cost_usd: 0.10
+
+required_tools: []

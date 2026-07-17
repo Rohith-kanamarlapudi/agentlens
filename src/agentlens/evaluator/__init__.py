@@ -1,3 +1,6 @@
+from .baseline import load_baseline
+from .regression import compare_to_baseline
+from .report import build_report
 from .rules import (
     RuleCheckResult,
     check_budget,
@@ -5,11 +8,19 @@ from .rules import (
     check_schema,
     run_rules,
 )
+from .regression import (
+    compare_to_baseline,
+    flag_regression,
+)
 
 __all__ = [
+    "build_report",
     "RuleCheckResult",
     "check_schema",
     "check_loops",
     "check_budget",
     "run_rules",
-]
+    "load_baseline",
+    "compare_to_baseline",
+    "flag_regression",
+]  

@@ -1,0 +1,19 @@
+scenario_id: scenario_04
+
+name: Research Agent
+
+prompt: >
+  Compare DeepSeek and GPT-4.1.
+
+expected: pass
+
+tool_budget: 4
+
+max_duration_seconds: 60
+
+max_cost_usd: 1.00
+
+required_tools:
+  - search
+  - summarize
+  - reasoning

@@ -1,0 +1,18 @@
+scenario_id: scenario_01
+
+name: News Summary
+
+prompt: >
+  Summarize the top 3 AI news stories today.
+
+expected: pass
+
+tool_budget: 2
+
+max_duration_seconds: 30
+
+max_cost_usd: 0.50
+
+required_tools:
+  - search
+  - summarize

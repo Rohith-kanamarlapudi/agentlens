@@ -1,0 +1,27 @@
+{
+    "scenario_id": "scenario_01",
+    "name": "Basic Question Answering",
+    "description": "Simple factual question using one search step.",
+
+    "expected": {
+        "score": 0.92,
+        "passed": true
+    },
+
+    "tool_call_pattern": [
+        "search",
+        "summarize"
+    ],
+
+    "limits": {
+        "max_duration_seconds": 30,
+        "max_cost_usd": 0.50,
+        "max_tool_calls": 5
+    },
+
+    "metadata": {
+        "model": "deepseek-chat",
+        "rubric": "default",
+        "version": "1.0"
+    }
+}
