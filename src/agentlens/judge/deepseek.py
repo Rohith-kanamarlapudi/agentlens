@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 
@@ -9,6 +10,9 @@ from openai import OpenAI
 from .rubric import load_rubric
 
 load_dotenv()
+
+# In-memory cache for judge results
+_JUDGE_CACHE: dict[str, dict] = {}
 
 
 class DeepSeekJudge:
@@ -40,6 +44,33 @@ class DeepSeekJudge:
                 "deepseek-chat",
             )
         )
+
+    def _trace_hash(
+        self,
+        prompt: str,
+        answer: str,
+        rubric: dict,
+    ) -> str:
+        """
+        Compute a deterministic hash for a judge request.
+
+        Identical prompt + answer + rubric + model
+        will always produce the same cache key.
+        """
+
+        payload = json.dumps(
+            {
+                "prompt": prompt,
+                "answer": answer,
+                "rubric": rubric,
+                "model": self.model,
+            },
+            sort_keys=True,
+        )
+
+        return hashlib.sha256(
+            payload.encode("utf-8")
+        ).hexdigest()
 
     def judge(
         self,
@@ -123,3 +154,51 @@ Required format:
                 "DeepSeek returned invalid JSON.\n\n"
                 f"{content}"
             ) from exc
+
+    def judge_cached(
+        self,
+        prompt: str,
+        answer: str,
+        rubric_path: str = "rubrics/default.yaml",
+    ) -> dict:
+        """
+        Return a cached judge result if an identical request
+        has already been evaluated.
+        """
+
+        rubric = load_rubric(rubric_path)
+
+        cache_key = self._trace_hash(
+            prompt,
+            answer,
+            rubric,
+        )
+
+        if cache_key in _JUDGE_CACHE:
+            return _JUDGE_CACHE[cache_key]
+
+        result = self.judge(
+            prompt=prompt,
+            answer=answer,
+            rubric_path=rubric_path,
+        )
+
+        _JUDGE_CACHE[cache_key] = result
+
+        return result
+
+    @staticmethod
+    def clear_cache() -> None:
+        """
+        Clear the in-memory judge cache.
+        """
+
+        _JUDGE_CACHE.clear()
+
+    @staticmethod
+    def cache_size() -> int:
+        """
+        Return the number of cached judge results.
+        """
+
+        return len(_JUDGE_CACHE)
