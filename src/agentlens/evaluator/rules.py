@@ -3,7 +3,9 @@ from __future__ import annotations
 from typing import Any
 
 from agentlens.models import ToolCall
+from collections import Counter
 
+from agentlens.models import Span   
 
 def check_schema(
     call: ToolCall,
@@ -46,3 +48,34 @@ def check_schema(
             )
 
     return errors
+
+def check_loops(
+    spans: list[Span],
+    threshold: int = 3,
+) -> list[str]:
+    """
+    Detect repeated tool calls.
+
+    If the same tool is invoked 'threshold' or more times,
+    return a warning.
+    """
+
+    tool_names = [
+        tool.name
+        for span in spans
+        for tool in span.tool_calls
+    ]
+
+    counts = Counter(tool_names)
+
+    warnings = []
+
+    for tool_name, count in counts.items():
+
+        if count >= threshold:
+
+            warnings.append(
+                f"Tool '{tool_name}' was called {count} times."
+            )
+
+    return warnings
