@@ -8,6 +8,10 @@ from .rules import (
     check_schema,
     run_rules,
 )
+from .regression import (
+    compare_to_baseline,
+    flag_regression,
+)
 
 __all__ = [
     "build_report",
@@ -18,4 +22,5 @@ __all__ = [
     "run_rules",
     "load_baseline",
     "compare_to_baseline",
+    "flag_regression",
 ]  
