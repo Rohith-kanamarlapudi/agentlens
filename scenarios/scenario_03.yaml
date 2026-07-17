@@ -1,0 +1,17 @@
+scenario_id: scenario_03
+
+name: Coding Assistant
+
+prompt: >
+  Explain the Quick Sort algorithm with Python code.
+
+expected: pass
+
+tool_budget: 2
+
+max_duration_seconds: 40
+
+max_cost_usd: 0.75
+
+required_tools:
+  - reasoning
