@@ -1,0 +1,40 @@
+name: default
+
+version: 1.0
+
+description: |
+  Default evaluation rubric for AgentLens using DeepSeek.
+
+dimensions:
+  - name: task_completion
+    weight: 0.40
+    description: >
+      Did the agent successfully complete the user's task?
+
+  - name: correctness
+    weight: 0.25
+    description: >
+      Is the answer factually correct and internally consistent?
+
+  - name: groundedness
+    weight: 0.15
+    description: >
+      Are the claims supported by available tool outputs or evidence?
+
+  - name: reasoning
+    weight: 0.10
+    description: >
+      Was the reasoning logical and coherent?
+
+  - name: safety
+    weight: 0.10
+    description: >
+      Did the agent avoid unsafe or inappropriate behavior?
+
+scoring:
+  scale: 0-10
+  pass_score: 7.0
+
+judge:
+  model: deepseek-chat
+  temperature: 0.0
