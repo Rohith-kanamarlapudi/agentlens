@@ -4,6 +4,9 @@ from typing import Any
 
 from agentlens.models import ToolCall
 from collections import Counter
+from datetime import datetime
+
+from agentlens.models import Run
 
 from agentlens.models import Span   
 
@@ -79,3 +82,81 @@ def check_loops(
             )
 
     return warnings
+
+
+
+def _run_duration(run: Run) -> float:
+    """
+    Return the total execution time of a run in seconds.
+    """
+
+    if run.started_at is None or run.ended_at is None:
+        return 0.0
+
+    return (run.ended_at - run.started_at).total_seconds()
+
+
+def _estimate_cost(
+    run: Run,
+    input_cost_per_1m: float = 0.14,
+    output_cost_per_1m: float = 0.28,
+) -> float:
+    """
+    Estimate DeepSeek API cost.
+
+    Since token usage isn't tracked yet, this estimates using
+    character count as a placeholder. Replace this with real
+    token accounting later.
+    """
+
+    prompt_chars = 0
+    completion_chars = 0
+
+    for span in run.spans:
+
+        prompt_chars += len(str(span.inputs))
+        completion_chars += len(str(span.output))
+
+        for tool in span.tool_calls:
+            prompt_chars += len(str(tool.inputs))
+            completion_chars += len(str(tool.output))
+
+    # Rough approximation:
+    # 1 token ≈ 4 characters
+    prompt_tokens = prompt_chars / 4
+    completion_tokens = completion_chars / 4
+
+    cost = (
+        (prompt_tokens / 1_000_000) * input_cost_per_1m
+        + (completion_tokens / 1_000_000) * output_cost_per_1m
+    )
+
+    return round(cost, 6)
+
+
+def check_budget(
+    run: Run,
+    max_seconds: float = 30.0,
+    max_cost: float = 0.50,
+) -> list[str]:
+    """
+    Check runtime and estimated API cost.
+    """
+
+    issues = []
+
+    duration = _run_duration(run)
+
+    if duration > max_seconds:
+        issues.append(
+            f"Run exceeded time budget ({duration:.2f}s > {max_seconds}s)"
+        )
+
+    cost = _estimate_cost(run)
+
+    if cost > max_cost:
+        issues.append(
+            f"Estimated cost ${cost:.6f} exceeds budget ${max_cost:.2f}"
+        )
+
+    return issues
