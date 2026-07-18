@@ -12,6 +12,8 @@ from .regression import (
     compare_to_baseline,
     flag_regression,
 )
+from .pipeline import evaluate_run
+
 
 __all__ = [
     "build_report",
@@ -23,4 +25,5 @@ __all__ = [
     "load_baseline",
     "compare_to_baseline",
     "flag_regression",
+    "evaluate_run",
 ]  
