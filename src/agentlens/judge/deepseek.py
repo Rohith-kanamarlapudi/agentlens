@@ -6,6 +6,12 @@ import os
 
 from dotenv import load_dotenv
 from openai import OpenAI
+from tenacity import (
+    retry,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential,
+)
 
 from .rubric import load_rubric
 
@@ -55,7 +61,7 @@ class DeepSeekJudge:
         Compute a deterministic hash for a judge request.
 
         Identical prompt + answer + rubric + model
-        will always produce the same cache key.
+        always produce the same cache key.
         """
 
         payload = json.dumps(
@@ -155,6 +161,37 @@ Required format:
                 f"{content}"
             ) from exc
 
+    @retry(
+        wait=wait_exponential(
+            multiplier=1,
+            min=1,
+            max=10,
+        ),
+        stop=stop_after_attempt(4),
+        retry=retry_if_exception_type(Exception),
+        reraise=True,
+    )
+    def _judge_with_retry(
+        self,
+        prompt: str,
+        answer: str,
+        rubric_path: str,
+    ) -> dict:
+        """
+        Execute the judge with automatic retry.
+
+        Retries on transient failures such as:
+        - Rate limits
+        - Network failures
+        - Temporary DeepSeek API errors
+        """
+
+        return self.judge(
+            prompt=prompt,
+            answer=answer,
+            rubric_path=rubric_path,
+        )
+
     def judge_cached(
         self,
         prompt: str,
@@ -162,8 +199,7 @@ Required format:
         rubric_path: str = "rubrics/default.yaml",
     ) -> dict:
         """
-        Return a cached judge result if an identical request
-        has already been evaluated.
+        Return a cached judge result if available.
         """
 
         rubric = load_rubric(rubric_path)
@@ -177,7 +213,7 @@ Required format:
         if cache_key in _JUDGE_CACHE:
             return _JUDGE_CACHE[cache_key]
 
-        result = self.judge(
+        result = self._judge_with_retry(
             prompt=prompt,
             answer=answer,
             rubric_path=rubric_path,
@@ -190,7 +226,7 @@ Required format:
     @staticmethod
     def clear_cache() -> None:
         """
-        Clear the in-memory judge cache.
+        Clear the in-memory cache.
         """
 
         _JUDGE_CACHE.clear()
@@ -198,7 +234,7 @@ Required format:
     @staticmethod
     def cache_size() -> int:
         """
-        Return the number of cached judge results.
+        Return the number of cached entries.
         """
 
         return len(_JUDGE_CACHE)
