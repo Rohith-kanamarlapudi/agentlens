@@ -1,0 +1,9 @@
+scenario_id: toy_a_01
+
+name: Weather Agent
+
+prompt: "What is the weather today?"
+
+expected: pass
+
+tool_budget: 2
