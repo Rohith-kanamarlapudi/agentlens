@@ -6,6 +6,8 @@ from typing import Any
 import click
 import yaml
 
+from agentlens.dashboard.export import export_html
+
 
 def print_report(results: list[dict[str, Any]]) -> None:
     """
@@ -60,6 +62,9 @@ def cli():
     pass
 
 
+# ---------------------------------------------------------------------
+# Run Scenarios
+# ---------------------------------------------------------------------
 @cli.command()
 @click.argument(
     "scenarios_dir",
@@ -100,19 +105,19 @@ def run(
         ) as f:
             scenario = yaml.safe_load(f)
 
-        # Temporary scoring until the evaluator is wired in
+        # Temporary scoring until evaluator is connected
         passed = scenario["expected"] == "pass"
         score = 1.0 if passed else 0.0
 
-        result = {
-            "scenario_id": scenario["scenario_id"],
-            "name": scenario.get("name", ""),
-            "passed": passed,
-            "score": score,
-            "reasons": [],
-        }
-
-        results.append(result)
+        results.append(
+            {
+                "scenario_id": scenario["scenario_id"],
+                "name": scenario.get("name", ""),
+                "passed": passed,
+                "score": score,
+                "reasons": [],
+            }
+        )
 
     print_report(results)
 
@@ -126,6 +131,33 @@ def run(
         raise SystemExit(1)
 
     click.echo("\nEvaluation PASSED.")
+
+
+# ---------------------------------------------------------------------
+# Export HTML Report
+# ---------------------------------------------------------------------
+@cli.command(name="export-html")
+@click.argument("run_id")
+@click.option(
+    "--out",
+    default="report.html",
+    show_default=True,
+    help="Output HTML filename.",
+)
+def export_html_cmd(
+    run_id: str,
+    out: str,
+):
+    """
+    Export a run as a standalone HTML report.
+    """
+
+    output = export_html(
+        run_id=run_id,
+        out=out,
+    )
+
+    click.echo(f"HTML report exported to: {output.resolve()}")
 
 
 if __name__ == "__main__":
