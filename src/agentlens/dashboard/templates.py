@@ -135,3 +135,104 @@ def render_timeline(
     """
 
     return html
+
+from html import escape
+
+from agentlens.models import Run
+
+
+def render_diff(current: Run, baseline: Run) -> str:
+    """
+    Render a simple comparison page between two runs.
+    """
+
+    current_spans = len(current.spans)
+    baseline_spans = len(baseline.spans)
+
+    current_tools = sum(
+        len(span.tool_calls)
+        for span in current.spans
+    )
+
+    baseline_tools = sum(
+        len(span.tool_calls)
+        for span in baseline.spans
+    )
+
+    return f"""
+    <!DOCTYPE html>
+
+    <html>
+
+    <head>
+
+        <title>Run Comparison</title>
+
+        <style>
+
+            body {{
+                font-family: Arial;
+                margin: 40px;
+            }}
+
+            table {{
+                border-collapse: collapse;
+                width: 100%;
+            }}
+
+            th, td {{
+                border: 1px solid #ddd;
+                padding: 10px;
+                text-align: left;
+            }}
+
+            th {{
+                background: #f4f4f4;
+            }}
+
+        </style>
+
+    </head>
+
+    <body>
+
+        <h1>Run Comparison</h1>
+
+        <table>
+
+            <tr>
+                <th>Metric</th>
+                <th>Current</th>
+                <th>Baseline</th>
+            </tr>
+
+            <tr>
+                <td>Agent</td>
+                <td>{escape(current.agent_name)}</td>
+                <td>{escape(baseline.agent_name)}</td>
+            </tr>
+
+            <tr>
+                <td>Status</td>
+                <td>{current.status}</td>
+                <td>{baseline.status}</td>
+            </tr>
+
+            <tr>
+                <td>Spans</td>
+                <td>{current_spans}</td>
+                <td>{baseline_spans}</td>
+            </tr>
+
+            <tr>
+                <td>Tool Calls</td>
+                <td>{current_tools}</td>
+                <td>{baseline_tools}</td>
+            </tr>
+
+        </table>
+
+    </body>
+
+    </html>
+    """
