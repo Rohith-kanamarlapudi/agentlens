@@ -8,6 +8,8 @@ from agentlens.store import TraceStore
 
 app = FastAPI(
     title="AgentLens Dashboard",
+    description="Visualize AgentLens traces and evaluation results.",
+    version="0.2.0",
 )
 
 store = TraceStore()
@@ -15,8 +17,12 @@ store = TraceStore()
 
 @app.get("/")
 def home():
+    """
+    Dashboard home page.
+    """
     return {
         "message": "AgentLens Dashboard",
+        "docs": "/docs",
     }
 
 
@@ -25,13 +31,29 @@ def home():
     response_class=HTMLResponse,
 )
 def run_report(run_id: str):
+    """
+    Display a trace report for a specific run.
+    """
 
     run = store.get_trace(run_id)
 
     if run is None:
         raise HTTPException(
             status_code=404,
-            detail="Run not found",
+            detail=f"Run '{run_id}' not found.",
         )
 
-    return render_timeline(run)
+    # ------------------------------------------------------------------
+    # Evaluation results are not stored in SQLite yet.
+    # Later replace this with something like:
+    #
+    # evaluation = store.get_evaluation(run_id)
+    #
+    # once evaluator persistence is implemented.
+    # ------------------------------------------------------------------
+    evaluation = None
+
+    return render_timeline(
+        run=run,
+        evaluation=evaluation,
+    )
