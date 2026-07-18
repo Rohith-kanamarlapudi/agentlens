@@ -19,6 +19,9 @@ dependencies = [
     "openai>=1.99.0",
     "pyyaml>=6.0",
     "tenacity>=9.0.0",
+    "fastapi",
+    "uvicorn",
+    "jinja2",
 ]
 
 [build-system]

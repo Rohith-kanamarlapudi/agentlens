@@ -1,0 +1,9 @@
+scenario_id: toy_b_01
+
+name: Math Agent
+
+prompt: "What is 12 + 30?"
+
+expected: pass
+
+tool_budget: 1
