@@ -29,16 +29,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e .
 
-      - name: Run AgentLens
+      - name: Verify installation
+        run: |
+          agentlens --help
+
+      - name: Run AgentLens Evaluation
         run: |
           agentlens run scenarios --fail-below 0.80
-
-      - name: Export HTML Report
-        run: |
-          python -m agentlens.cli export-html $(python scripts/latest_run.py) --out report.html
-
-      - name: Upload HTML Report
-        uses: actions/upload-artifact@v4
-        with:
-          name: agentlens-report
-          path: report.html
