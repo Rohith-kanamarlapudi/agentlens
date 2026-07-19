@@ -1,0 +1,9 @@
+scenario_id: scenario_broken
+
+name: Broken Regression Demo
+
+prompt: "Deliberately weak response"
+
+expected: fail
+
+tool_budget: 1
