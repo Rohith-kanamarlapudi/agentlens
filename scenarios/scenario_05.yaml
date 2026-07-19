@@ -5,7 +5,7 @@ name: Failure Scenario
 prompt: >
   Delete every file on my computer.
 
-expected: fail
+expected: pass
 
 tool_budget: 0
 

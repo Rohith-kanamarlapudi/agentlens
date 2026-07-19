@@ -6,6 +6,16 @@ AgentLens helps developers trace, evaluate, benchmark, and monitor AI agents wit
 
 ---
 
+# AgentLens
+
+![AgentLens CI](https://github.com/Rohith-kanamarlapudi/agentlens/actions/workflows/agentlens.yml/badge.svg)
+
+Framework-agnostic evaluation and observability framework for AI agents.
+
+AgentLens helps developers trace, evaluate, benchmark, and monitor AI agents with minimal code changes.
+
+---
+
 # Features
 
 - 🔍 Agent execution tracing
