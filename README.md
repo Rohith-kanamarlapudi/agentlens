@@ -1,13 +1,5 @@
 # AgentLens
 
-Framework-agnostic evaluation and observability framework for AI agents.
-
-AgentLens helps developers trace, evaluate, benchmark, and monitor AI agents with minimal code changes.
-
----
-
-# AgentLens
-
 ![AgentLens CI](https://github.com/Rohith-kanamarlapudi/agentlens/actions/workflows/agentlens.yml/badge.svg)
 
 Framework-agnostic evaluation and observability framework for AI agents.
@@ -264,6 +256,24 @@ print(result)
 ✅ CLI runner
 
 ✅ Scenario testing
+---
+
+## Dogfooding Results
+
+AgentLens was successfully integrated into a real-world multi-agent Playwright AI Automation project to validate its tracing and evaluation capabilities.
+
+### Before
+
+- No centralized visibility into the execution of individual AI agents.
+- Evaluating the pipeline required manually inspecting generated outputs.
+- Scenario execution depended on every YAML file explicitly defining a `scenario_id`.
+
+### After
+
+- Integrated tracing across the Strategy, Architecture, Code Generation, Review, Edge Cases, and Heal agents.
+- Added six representative evaluation scenarios covering common Playwright test generation workflows.
+- Successfully executed the complete evaluation suite with **6/6 scenarios passing** and an **average evaluation score of 1.00**.
+- Improved the CLI by making scenario execution more robust during dogfooding.
 
 ---
 
