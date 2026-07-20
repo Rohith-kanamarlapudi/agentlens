@@ -77,36 +77,29 @@ agentlens/
 
 ---
 
-# Architecture
-
-```
-Agent
-   │
-   ▼
-@trace SDK
-   │
-   ▼
-Trace Store
+Application
+      │
+      ▼
+ @trace Decorator
+      │
+      ▼
+ Trace Store
 (JSONL / SQLite)
-   │
-   ▼
-Rule Engine
-   │
-   ▼
-DeepSeek Judge
-   │
-   ▼
-Regression Engine
-   │
-   ▼
-CLI / Dashboard / CI
-```
-
-For additional details see:
-
-```
-architecture.md
-```
+      │
+      ▼
+ Rule Engine
+      │
+      ├── Schema Validation
+      ├── Loop Detection
+      ├── Budget Checks
+      ▼
+DeepSeek LLM-as-a-Judge
+      │
+      ▼
+Regression Detection
+      │
+      ▼
+CLI • Dashboard • CI/CD
 
 ---
 
