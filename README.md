@@ -6,6 +6,12 @@ Framework-agnostic evaluation and observability framework for AI agents.
 
 AgentLens helps developers trace, evaluate, benchmark, and monitor AI agents with minimal code changes.
 
+## Why AgentLens?
+
+Modern AI applications often rely on multiple collaborating agents, making it difficult to understand how decisions are made, where failures occur, and how changes affect overall system quality.
+
+AgentLens provides end-to-end observability and evaluation for multi-agent workflows through automatic execution tracing, rule-based validation, LLM-as-a-Judge scoring, regression detection, and scenario-based testing. It helps developers identify issues early, compare results across runs, and integrate AI evaluation directly into their development and CI/CD workflows.
+
 ---
 
 # Features
