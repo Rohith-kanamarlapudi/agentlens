@@ -10,6 +10,7 @@ from agentlens.models import Run
 
 from agentlens.models import Span   
 from pydantic import BaseModel, Field
+LOOP_THRESHOLD_DEFAULT = 3
 def check_schema(
     call: ToolCall,
     signature: dict[str, type],
@@ -54,7 +55,7 @@ def check_schema(
 
 def check_loops(
     spans: list[Span],
-    threshold: int = 3,
+    threshold: int = LOOP_THRESHOLD_DEFAULT,
 ) -> list[str]:
     """
     Detect repeated tool calls.
