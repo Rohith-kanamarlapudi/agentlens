@@ -215,3 +215,9 @@ dist/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Generated reports
+report.html
+
+# JSON trace exports
+trace.json
