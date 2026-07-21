@@ -1,5 +1,7 @@
 from agentlens import trace
 
+from agentlens.logging_config import get_logger
+logger = get_logger(__name__)
 
 @trace(name="planner")
 def planner(query: str):
@@ -17,4 +19,4 @@ def run_demo(query: str):
 
 
 if __name__ == "__main__":
-    print(run_demo("hello agentlens"))
+    logger.info("%s", run_demo("hello agentlens"))
