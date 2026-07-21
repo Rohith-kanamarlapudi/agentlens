@@ -7,7 +7,30 @@ from agentlens.models import Run
 
 PASS_THRESHOLD = 0.7
 
+_env = Environment(
+    loader=FileSystemLoader(
+        Path(__file__).parent / "templates"
+    ),
+    autoescape=True,
+)
+def render_report(
+    run,
+    eval_result,
+    trend_labels,
+    trend_scores,
+) -> str:
+    """
+    Render the dashboard using the Jinja2 template.
+    """
 
+    return _env.get_template(
+        "report.html.j2"
+    ).render(
+        run=run,
+        eval_result=eval_result,
+        trend_labels=trend_labels,
+        trend_scores=trend_scores,
+    )
 def render_badges(dimensions: dict) -> str:
     """
     Render pass/fail badges for each rubric dimension.
@@ -137,7 +160,9 @@ def render_timeline(
     return html
 
 from html import escape
+from pathlib import Path
 
+from jinja2 import Environment, FileSystemLoader
 from agentlens.models import Run
 
 
