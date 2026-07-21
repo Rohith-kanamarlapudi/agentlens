@@ -127,5 +127,29 @@ def export_html_cmd(
     click.echo(f"HTML report exported to: {output.resolve()}")
 
 
+
+@cli.command()
+def runs() -> None:
+    """
+    List all recorded runs.
+    """
+
+    from agentlens.store import TraceStore
+
+    store = TraceStore()
+
+    rows = store.list_runs()
+
+    if not rows:
+        click.echo("No runs found.")
+        return
+
+    for row in rows:
+        click.echo(
+            f"{row['run_id']}  "
+            f"{row['agent_name']}  "
+            f"{row['status']}"
+        )
+
 if __name__ == "__main__":
     cli()
