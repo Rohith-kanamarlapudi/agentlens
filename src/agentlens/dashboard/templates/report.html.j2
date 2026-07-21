@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html data-theme="dark">
+<head>
+<meta charset="utf-8">
+<title>AgentLens — {{ run.agent_name }}</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<link rel="stylesheet" href="dashboard.css">
+
+</head>
+<body>
+
+<div class="layout">
+
+  <div class="sidebar">
+    <h1>AgentLens</h1>
+    <p>{{ run.agent_name }} · {{ run.run_id }}</p>
+  </div>
+
+  <div class="main">
+
+    <div class="card">
+      <h2>Rubric scores</h2>
+
+      {% for dim, r in eval_result.items() %}
+        <span class="badge {{ 'pass' if r.score > 0.7 else 'fail' }}">
+          {{ dim }}: {{ "%.2f" % r.score }}
+        </span>
+      {% endfor %}
+
+    </div>
+
+    <div class="card">
+      <h2>Score trend</h2>
+      <canvas id="trend" height="80"></canvas>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+
+new Chart(document.getElementById("trend"), {
+
+    type: "line",
+
+    data: {
+        labels: {{ trend_labels | tojson }},
+        datasets: [{
+            data: {{ trend_scores | tojson }},
+            borderColor: "#58a6ff"
+        }]
+    },
+
+    options: {
+        scales: {
+            y: {
+                min: 0,
+                max: 1
+            }
+        }
+    }
+
+});
+
+</script>
+
+</body>
+</html>
