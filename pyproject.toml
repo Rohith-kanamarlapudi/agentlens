@@ -22,6 +22,8 @@ dependencies = [
     "fastapi",
     "uvicorn",
     "jinja2",
+    "rich",
+
 ]
 
 [build-system]
