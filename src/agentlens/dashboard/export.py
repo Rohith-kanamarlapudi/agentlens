@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import shutil
 from pathlib import Path
 
-from agentlens.dashboard.templates import render_timeline
+from agentlens.dashboard.templates import render_report
 from agentlens.store import TraceStore
 
 
@@ -23,9 +24,11 @@ def export_html(
             f"Run '{run_id}' not found."
         )
 
-    html = render_timeline(
+    html = render_report(
         run=run,
-        evaluation=None,
+        eval_result={},
+        trend_labels=[],
+        trend_scores=[],
     )
 
     out = Path(out)
@@ -34,5 +37,23 @@ def export_html(
         html,
         encoding="utf-8",
     )
+
+    # Copy dashboard.css beside the HTML report
+    css_source = (
+        Path(__file__).parent
+        / "static"
+        / "dashboard.css"
+    )
+
+    css_destination = (
+        out.parent
+        / "dashboard.css"
+    )
+
+    if css_source.exists():
+        shutil.copy2(
+            css_source,
+            css_destination,
+        )
 
     return out
