@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import shutil
 from pathlib import Path
 
 from agentlens.dashboard.templates import render_report
@@ -37,4 +38,22 @@ def export_html(
         encoding="utf-8",
     )
 
-    return out 
+    # Copy dashboard.css beside the HTML report
+    css_source = (
+        Path(__file__).parent
+        / "static"
+        / "dashboard.css"
+    )
+
+    css_destination = (
+        out.parent
+        / "dashboard.css"
+    )
+
+    if css_source.exists():
+        shutil.copy2(
+            css_source,
+            css_destination,
+        )
+
+    return out
