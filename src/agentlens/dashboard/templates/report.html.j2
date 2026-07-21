@@ -49,8 +49,11 @@ new Chart(document.getElementById("trend"), {
     data: {
         labels: {{ trend_labels | tojson }},
         datasets: [{
+            label: "Score",
             data: {{ trend_scores | tojson }},
-            borderColor: "#58a6ff"
+            borderColor: "#58a6ff",
+            fill: false,
+            tension: 0.3
         }]
     },
 

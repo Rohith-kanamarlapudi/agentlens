@@ -1,66 +1,73 @@
 <!DOCTYPE html>
-<html data-theme="dark">
+<html lang="en" data-theme="dark">
 <head>
-<meta charset="utf-8">
-<title>AgentLens — hello</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgentLens — Hello</title>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<link rel="stylesheet" href="dashboard.css">
-
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="dashboard.css">
 </head>
+
 <body>
 
 <div class="layout">
 
-  <div class="sidebar">
-    <h1>AgentLens</h1>
-    <p>hello · 8c24176c-66db-409b-bce5-7a90708f8e9e</p>
-  </div>
+    <aside class="sidebar">
+        <h1>AgentLens</h1>
+        <p>Hello · 8c24176c-66db-409b-bce5-7a90708f8e9e</p>
+    </aside>
 
-  <div class="main">
+    <main class="main">
 
-    <div class="card">
-      <h2>Rubric scores</h2>
+        <section class="card">
+            <h2>Rubric Scores</h2>
+            <!-- Scores will be inserted here -->
+        </section>
 
-      
+        <section class="card">
+            <h2>Score Trend</h2>
+            <canvas id="trend" height="80"></canvas>
+        </section>
 
-    </div>
-
-    <div class="card">
-      <h2>Score trend</h2>
-      <canvas id="trend" height="80"></canvas>
-    </div>
-
-  </div>
+    </main>
 
 </div>
 
 <script>
+document.addEventListener("DOMContentLoaded", () => {
+    const ctx = document.getElementById("trend");
 
-new Chart(document.getElementById("trend"), {
-
-    type: "line",
-
-    data: {
-        labels: [],
-        datasets: [{
-            data: [],
-            borderColor: "#58a6ff"
-        }]
-    },
-
-    options: {
-        scales: {
-            y: {
-                min: 0,
-                max: 1
-            }
-        }
+    if (!ctx) {
+        console.error("Canvas element not found.");
+        return;
     }
 
+    new Chart(ctx, {
+        type: "line",
+        data: {
+            labels: [],
+            datasets: [{
+                label: "Score",
+                data: [],
+                borderColor: "#58a6ff",
+                backgroundColor: "rgba(88, 166, 255, 0.2)",
+                fill: false,
+                tension: 0.3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            scales: {
+                y: {
+                    min: 0,
+                    max: 1
+                }
+            }
+        }
+    });
 });
-
 </script>
 
 </body>
