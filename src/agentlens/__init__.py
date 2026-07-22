@@ -1,3 +1,5 @@
+from ._version import __version__
+
 from .models import (
     ToolCall,
     Span,
@@ -13,6 +15,7 @@ from .evaluator import (
 )
 
 __all__ = [
+    "__version__",
     "ToolCall",
     "Span",
     "Run",
