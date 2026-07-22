@@ -12,12 +12,11 @@ Wrap any Python function with **`@trace`** and AgentLens captures every call, ti
 
 <br/>
 
-[![AgentLens CI](https://github.com/Rohith-kanamarlapudi/agentlens/actions/workflows/agentlens.yml/badge.svg)](https://github.com/Rohith-kanamarlapudi/agentlens/actions/workflows/agentlens.yml)
+[![AgentLens CI](https://img.shields.io/github/actions/workflow/status/Rohith-kanamarlapudi/agentlens/agentlens.yml?style=for-the-badge&label=AgentLens%20CI&logo=github&logoColor=white&labelColor=333)](https://github.com/Rohith-kanamarlapudi/agentlens/actions/workflows/agentlens.yml)
 [![Python](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white&style=for-the-badge)](https://www.python.org/)
-[![Pydantic](https://img.shields.io/badge/Pydantic-v2-E92063?logo=pydantic&logoColor=white&style=for-the-badge)](https://docs.pydantic.dev/)
+[![Pydantic](https://img.shields.io/badge/Pydantic-V2-E92063?logo=pydantic&logoColor=white&style=for-the-badge)](https://docs.pydantic.dev/)
 [![DeepSeek](https://img.shields.io/badge/DeepSeek-LLM--as--Judge-4D6BFE?style=for-the-badge)](https://www.deepseek.com/)
-[![SQLite](https://img.shields.io/badge/SQLite-Trace%20Store-003B57?logo=sqlite&logoColor=white&style=for-the-badge)](https://www.sqlite.org/)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
+[![SQLite](https://img.shields.io/badge/SQLite-Trace%20Store-07405E?logo=sqlite&logoColor=white&style=for-the-badge)](https://www.sqlite.org/)
 
 </div>
 
@@ -25,7 +24,7 @@ Wrap any Python function with **`@trace`** and AgentLens captures every call, ti
 
 ### 📌 Jump to
 
-[What Is This](#-what-is-this) · [Pipeline](#-pipeline-at-a-glance) · [Key Features](#-key-features) · [Architecture](#️-architecture) · [Project Structure](#️-project-structure) · [Tech Stack](#️-tech-stack) · [Getting Started](#-getting-started) · [Usage Examples](#-usage-examples) · [Dogfooding Results](#-dogfooding-results) · [Roadmap](#️-roadmap) · [Contributing](#-contributing)
+[What Is This](#-what-is-this) · [How It Works](#-how-it-works) · [Key Features](#-key-features) · [Architecture](#️-architecture) · [Project Structure](#️-project-structure) · [Tech Stack](#️-tech-stack) · [Getting Started](#-getting-started) · [Usage Examples](#-usage-examples) · [CI Integration](#-ci-integration) · [Dogfooding Results](#-dogfooding-results) · [Roadmap](#️-roadmap) · [FAQ](#-faq) · [Contributing](#-contributing) · [About](#-about)
 
 ---
 
@@ -43,36 +42,16 @@ AgentLens answers that with three layers working together:
 
 ---
 
-## ⚡ Pipeline at a Glance
+## 🔬 How It Works
 
-```
-   Your agent function
-          │
-          ▼
-   ┌─────────────┐
-   │  @trace SDK │   captures inputs, outputs, timing, nested tool calls
-   │             │   redacts known secret keys before anything is written
-   └──────┬──────┘
-          ▼
-   ┌─────────────────────┐
-   │     Trace Store     │   JSONL (raw) ──► SQLite (queryable: runs · spans · tool_calls)
-   └──────┬──────────────┘
-          ▼
-   ┌────────────────────────────────────────────────────────────┐
-   │                      Evaluator                             │
-   │                                                            │
-   │   Rule Engine                     DeepSeek LLM-as-a-Judge  │
-   │   • schema validation             • YAML rubric scoring    │
-   │   • loop detection (3+ calls)     • cached by trace hash   │
-   │   • timeout / cost budget         • retry w/ backoff       │
-   └──────┬─────────────────────────────────────────────────────┘
-          ▼
-   ┌──────────────────────┐
-   │ Regression Detector  │   new run vs. golden baseline
-   └──────┬───────────────┘
-          ▼
-   CLI (`agentlens run`) ──► exit code ──► CI gate blocks the PR
-```
+| Step | What happens |
+|---|---|
+| **1. Instrument** | Add `@trace` (or `@trace(name="...")`) above any agent function — sync or async, no other code changes |
+| **2. Run your agent** | Every call is captured: inputs, output, timing, nested tool calls, errors — secrets redacted automatically |
+| **3. Persist** | Traces stream to `traces.jsonl`, then migrate into a queryable SQLite store (`runs`, `spans`, `tool_calls`) |
+| **4. Evaluate** | Deterministic rules run first (cheap, fast); a DeepSeek judge scores against a YAML rubric where judgment is genuinely needed |
+| **5. Compare** | The scored run is diffed against a frozen golden baseline — score drops, new tool-call patterns, and cost spikes are all flagged |
+| **6. Gate** | `agentlens run scenarios/ --fail-below 0.8` returns a CI-ready exit code — a regressing PR is blocked the same way a failing unit test would be |
 
 ---
 
@@ -95,7 +74,7 @@ AgentLens answers that with three layers working together:
 | 💾 | **Golden Baseline Comparison** | Freeze a known-good result per scenario; every future run is measured against it |
 | 🖥 | **CLI Runner** | `agentlens run scenarios/ --fail-below 0.8` — one command, CI-ready exit code |
 | 🧪 | **Scenario-Based Testing** | Fixed YAML prompts with expected outcomes turn agent evaluation into a real test suite |
-| 🚀 | **CI/CD Ready** | GitHub Actions workflow included — a regressing PR is blocked automatically, the same way a failing unit test would be |
+| 🚀 | **CI/CD Ready** | GitHub Actions workflow included — a regressing PR is blocked automatically |
 
 ---
 
@@ -225,11 +204,11 @@ pip install -e .
 cp .env.example .env
 ```
 
-```env
-DEEPSEEK_API_KEY=your_api_key_here
-DEEPSEEK_MODEL=deepseek-chat
-DEEPSEEK_BASE_URL=https://api.deepseek.com
-```
+| Variable | Purpose | Default |
+|---|---|---|
+| `DEEPSEEK_API_KEY` | Auth for LLM-as-a-Judge calls | *(required)* |
+| `DEEPSEEK_MODEL` | Judge model | `deepseek-chat` |
+| `DEEPSEEK_BASE_URL` | API base URL | `https://api.deepseek.com` |
 
 ### 3. Run
 
@@ -264,6 +243,20 @@ print(add(2, 3))
 # A structured trace is captured automatically — no extra code required.
 ```
 
+### Trace a multi-step agent
+
+```python
+from agentlens import trace
+
+@trace(name="planner")
+def plan(query):
+    ...
+
+@trace(name="tool_call")
+def call_tool(action):
+    ...  # captured as a nested child span of whichever traced function calls it
+```
+
 ### Score a response with the DeepSeek judge
 
 ```python
@@ -278,6 +271,30 @@ result = judge.judge_cached(
 
 print(result)
 ```
+
+---
+
+## ⚙️ CI Integration
+
+Drop this into `.github/workflows/agentlens.yml` to gate every pull request on agent quality:
+
+```yaml
+name: agentlens
+on: [pull_request]
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    env:
+      DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+      - run: pip install -e .
+      - run: agentlens run scenarios/ --fail-below 0.8
+```
+
+A pull request that regresses agent quality below the threshold fails this check automatically — no manual review step required to catch it.
 
 ---
 
@@ -318,6 +335,22 @@ AgentLens was integrated into a real multi-agent system — [`playwright-ai-auto
 
 ---
 
+## ❓ FAQ
+
+**Does AgentLens require LangGraph or any specific agent framework?**
+No. `@trace` wraps plain Python functions — it has no dependency on any orchestration framework, which is exactly what made dogfooding it against a LangGraph pipeline possible without modifying AgentLens itself.
+
+**What happens if the DeepSeek API is unavailable?**
+Judge calls retry with exponential backoff. Deterministic rule-based checks (schema, loops, budget) don't depend on the API at all, so a full evaluation run degrades gracefully rather than failing outright.
+
+**Can I use a different LLM as the judge?**
+Not yet natively — this is the top item under "Coming next." The judge interface is intentionally narrow so a second backend can be added without touching the rest of the pipeline.
+
+**Is trace data safe to commit or share?**
+Known secret keys are redacted automatically before a trace is written or sent anywhere. That said, treat `traces.jsonl` and the SQLite store like any other log output — review before sharing broadly.
+
+---
+
 ## 🤝 Contributing
 
 ```bash
@@ -337,20 +370,29 @@ git push origin feature/my-feature
 
 ---
 
-## 📄 License
-
-MIT License — see [`LICENSE`](LICENSE) for details.
-
----
-
 ## 🙏 Acknowledgements
 
 Built on top of [DeepSeek](https://www.deepseek.com/), the [OpenAI Python SDK](https://github.com/openai/openai-python), [Pydantic](https://docs.pydantic.dev/), [Click](https://click.palletsprojects.com/), SQLite, PyYAML, and [Tenacity](https://tenacity.readthedocs.io/).
 
-<br/>
+---
+
+## 👤 About
 
 <div align="center">
 
-**Rohith Kanamarlapudi** — [@Rohith-kanamarlapudi](https://github.com/Rohith-kanamarlapudi)
+<br/>
+
+### Built and maintained by
+
+# Rohith Kanamarlapudi
+
+*AI Agents Developer — building multi-agent systems, evaluation tooling, and the infrastructure that keeps them honest.*
+
+[![GitHub](https://img.shields.io/badge/GitHub-Rohith--kanamarlapudi-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Rohith-kanamarlapudi)
+[![playwright-ai-automation](https://img.shields.io/badge/Also%20check%20out-playwright--ai--automation-2EAD33?style=for-the-badge&logo=playwright&logoColor=white)](https://github.com/Rohith-kanamarlapudi/playwright-ai-automation)
+
+<br/>
+
+*If AgentLens helped you evaluate or debug an agent, a ⭐ on the repo goes a long way.*
 
 </div>
