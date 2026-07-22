@@ -4,13 +4,12 @@ import contextvars
 import functools
 import inspect
 from datetime import datetime
-from pathlib import Path
+from .store import TraceStore
 from typing import Any, Callable
 
 from .models import Run, Span
 
-TRACE_FILE = Path("traces.jsonl")
-
+STORE = TraceStore()
 # Context variable used to track nested spans
 CURRENT_SPAN = contextvars.ContextVar(
     "current_span",
@@ -56,21 +55,9 @@ def _redact(value: Any) -> Any:
 
 def _emit(run: Run) -> None:
     """
-    Persist one run as a JSONL record.
-
-    Day 4 replaces this with SQLite storage.
+    Persist one run into SQLite.
     """
-
-    TRACE_FILE.parent.mkdir(parents=True, exist_ok=True)
-
-    with TRACE_FILE.open("a", encoding="utf-8") as f:
-        f.write(
-            run.model_dump_json(
-                exclude_none=True,
-                indent=None,
-            )
-        )
-        f.write("\n")
+    STORE.save_trace(run)
 
 
 def trace(
